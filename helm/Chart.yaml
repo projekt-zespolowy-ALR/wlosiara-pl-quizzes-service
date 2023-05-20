@@ -1,0 +1,15 @@
+apiVersion: v2
+name: wlosiara-pl-quizzes-service
+description: Products microservice
+icon: https://cdn.discordapp.com/attachments/1028608205229666398/1063459924048347186/image.png
+
+type: application
+
+version: 0.0.0
+
+appVersion: "0.0.0"
+
+dependencies:
+  - name: postgresql
+    version: "12.2.4"
+    repository: https://charts.bitnami.com/bitnami

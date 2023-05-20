@@ -1,0 +1,25 @@
+port: 3000
+
+postgresql:
+  auth:
+    database: "wlosiara-pl-quizzes-service"
+    username: "wlosiara-pl-quizzes-service"
+  primary:
+    initdb:
+      scripts-configmap: "wlosiara-pl-quizzes-service-initdb-scripts"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "128Mi"
+
+image:
+  dockerRegistry:
+    host: null # required
+
+resources:
+  requests:
+    cpu: "50m"
+    memory: "128Mi"
+  limits:
+    cpu: "100m"
+    memory: "256Mi"
