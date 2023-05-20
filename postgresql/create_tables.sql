@@ -1,1 +1,8 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE quizzes (
+	id UUID DEFAULT uuid_generate_v4() NOT NULL,
+	name TEXT NOT NULL,
+	slug TEXT NOT NULL UNIQUE,
+	PRIMARY KEY (id)
+);
