@@ -1,7 +1,8 @@
 import {Module} from "@nestjs/common";
+import QuizzesModule from "./quizzes/quizzes_module/QuizzesModule.js";
 
 @Module({
-	imports: [],
+	imports: [QuizzesModule],
 	controllers: [],
 	providers: [],
 })
