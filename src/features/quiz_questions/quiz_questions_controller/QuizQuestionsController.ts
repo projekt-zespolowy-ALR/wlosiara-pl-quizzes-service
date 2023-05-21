@@ -24,4 +24,38 @@ export default class QuizQuestionsController {
 	public constructor(quizQuestionsService: QuizQuestionsService) {
 		this.quizQuestionsService = quizQuestionsService;
 	}
+
+	@Get("/quizzes/:quizId/questions/:quizQuestionId")
+	public async getQuizQuestionById(
+		@Param(
+			"quizId",
+			new ParseUUIDPipe({
+				version: "4",
+			})
+		)
+		quizId: string,
+		@Param(
+			"quizQuestionId",
+			new ParseUUIDPipe({
+				version: "4",
+			})
+		)
+		quizQuestionId: string
+	): Promise<QuizQuestion> {
+		try {
+			const targetQuizQuestion = await this.quizQuestionsService.getQuizQuestionOfQuizById(
+				quizId,
+				quizQuestionId
+			);
+			return targetQuizQuestion;
+		} catch (error) {
+			if (error instanceof QuizQuestionsServiceQuizWithGivenIdNotFoundError) {
+				throw new NotFoundException(`Quiz with id "${error.quizId}" not found`);
+			}
+			if (error instanceof QuizQuestionsServiceQuizQuestionWithGivenIdNotFoundError) {
+				throw new NotFoundException(`Quiz question with id "${error.quizQuestionId}" not found`);
+			}
+			throw error;
+		}
+	}
 }
