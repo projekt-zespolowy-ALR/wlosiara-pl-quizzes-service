@@ -10,6 +10,9 @@ import QuizQuestionsServiceQuizWithGivenIdNotFoundError from "./QuizQuestionsSer
 import type CreateQuizQuestionPayload from "./CreateQuizQuestionPayload.js";
 import QuizEntity from "../../quizzes/quizzes_service/QuizEntity.js";
 import QuizQuestionsServiceQuizQuestionWithGivenIdNotFoundError from "./QuizQuestionsServiceQuizQuestionWithGivenIdNotFoundError.js";
+import type PagingOptions from "../../../paging/PagingOptions.js";
+import type Page from "../../../paging/Page.js";
+import buildPage from "../../../paging/buildPage.js";
 @Injectable()
 export default class QuizQuestionsService {
 	private readonly quizQuestionsRepository: Repository<QuizQuestionEntity>;
@@ -66,5 +69,34 @@ export default class QuizQuestionsService {
 			throw new QuizQuestionsServiceQuizQuestionWithGivenIdNotFoundError(quizQuestionId);
 		}
 		return deentityifyQuizEntity(quizQuestion);
+	}
+
+	public async getQuizQuestionsOfQuiz(
+		quizId: string,
+		pagingOptions: PagingOptions
+	): Promise<Page<QuizQuestion>> {
+		const result = await this.quizzesRepository
+			.createQueryBuilder("quiz")
+			.leftJoinAndSelect("quiz.quizQuestions", "quizQuestion")
+			.where("quiz.id = :quizId", {quizId})
+			.offset(pagingOptions.skip)
+			.limit(pagingOptions.take)
+			.loadRelationCountAndMap("quiz._totalNumberOfQuizQuestions", "quiz.quizQuestions")
+			.getOne();
+
+		if (result === null) {
+			throw new QuizQuestionsServiceQuizWithGivenIdNotFoundError(quizId);
+		}
+		const quizQuestions = result.quizQuestions;
+		return buildPage({
+			items: quizQuestions.map(deentityifyQuizEntity),
+			totalItemsCount: (
+				result as unknown as {
+					_totalNumberOfQuizQuestions: number;
+				}
+			)._totalNumberOfQuizQuestions,
+			skip: pagingOptions.skip,
+			take: pagingOptions.take,
+		});
 	}
 }

@@ -6,6 +6,7 @@ import {
 	Param,
 	ParseUUIDPipe,
 	Post,
+	Query,
 	ValidationPipe,
 } from "@nestjs/common";
 import QuizQuestionsService from "../quiz_questions_service/QuizQuestionsService.js";
@@ -14,6 +15,8 @@ import CreateQuizQuestionRequestBody from "./CreateQuizQuestionRequestBody.js";
 import QuizQuestionsServiceQuizWithGivenIdNotFoundError from "../quiz_questions_service/QuizQuestionsServiceQuizWithGivenIdNotFoundError.js";
 import type QuizQuestion from "./QuizQuestion.js";
 import QuizQuestionsServiceQuizQuestionWithGivenIdNotFoundError from "../quiz_questions_service/QuizQuestionsServiceQuizQuestionWithGivenIdNotFoundError.js";
+import type Page from "../../../paging/Page.js";
+import PagingOptions from "../../../paging/PagingOptions.js";
 
 @Controller("/")
 export default class QuizQuestionsController {
@@ -82,6 +85,37 @@ export default class QuizQuestionsController {
 			}
 			if (error instanceof QuizQuestionsServiceQuizQuestionWithGivenIdNotFoundError) {
 				throw new NotFoundException(`Quiz question with id "${error.quizQuestionId}" not found`);
+			}
+			throw error;
+		}
+	}
+
+	@Get("/quizzes/:quizId/questions")
+	public async getQuizQuestionsOfQuiz(
+		@Param(
+			"quizId",
+			new ParseUUIDPipe({
+				version: "4",
+			})
+		)
+		quizId: string,
+		@Query(
+			new ValidationPipe({
+				transform: true, // Transform to instance of PagingOptions
+				whitelist: true, // Do not put other query parameters into the object
+			})
+		)
+		pagingOptions: PagingOptions
+	): Promise<Page<QuizQuestion>> {
+		try {
+			const quizQuestionsOfQuiz = await this.quizQuestionsService.getQuizQuestionsOfQuiz(
+				quizId,
+				pagingOptions
+			);
+			return quizQuestionsOfQuiz;
+		} catch (error) {
+			if (error instanceof QuizQuestionsServiceQuizWithGivenIdNotFoundError) {
+				throw new NotFoundException(`Quiz with id "${error.quizId}" not found`);
 			}
 			throw error;
 		}
