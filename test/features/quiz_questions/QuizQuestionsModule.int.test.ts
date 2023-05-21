@@ -88,6 +88,23 @@ describe("QuizQuestionsModule", () => {
 					});
 				});
 			});
+			describe("GET /quizzes/[quizId]/questions/[quizQuestionId]", () => {
+				test("Should return 404 with an error", async () => {
+					const quizId = "effd00d7-4390-4361-bc3a-e038a0debc35";
+					const quizQuestionId = "a4bd7449-9359-4b00-ae92-d06d45db911a";
+
+					const response = await app.inject({
+						method: "GET",
+						url: `/v1/quizzes/${quizId}/questions/${quizQuestionId}`,
+					});
+					expect(response.statusCode).toBe(404);
+					expect(response.json()).toEqual({
+						statusCode: 404,
+						message: `Quiz with id "${quizId}" not found`,
+						error: "Not Found",
+					});
+				});
+			});
 		});
 		describe("One quiz with no questions in database", () => {
 			const addTestQuiz = async () => {
@@ -123,6 +140,24 @@ describe("QuizQuestionsModule", () => {
 					expect(response.json()).toEqual({
 						id: expect.any(String),
 						...addQuizQuestionRequestBody,
+					});
+				});
+			});
+
+			describe("GET /quizzes/[quizId]/questions/[quizQuestionId]", () => {
+				test("Should return 404 with an error", async () => {
+					const quiz = await addTestQuiz();
+					const quizQuestionId = "a4bd7449-9359-4b00-ae92-d06d45db911a";
+
+					const response = await app.inject({
+						method: "GET",
+						url: `/v1/quizzes/${quiz.id}/questions/${quizQuestionId}`,
+					});
+					expect(response.statusCode).toBe(404);
+					expect(response.json()).toEqual({
+						statusCode: 404,
+						message: `Quiz question with id "${quizQuestionId}" not found`,
+						error: "Not Found",
 					});
 				});
 			});
@@ -180,6 +215,19 @@ describe("QuizQuestionsModule", () => {
 						id: expect.any(String),
 						...addQuizQuestionRequestBody,
 					});
+				});
+			});
+
+			describe("GET /quizzes/[quizId]/questions/[quizQuestionId]", () => {
+				test("Should return 200 with the quiz question", async () => {
+					const {quiz, question} = await addTestQuizWithQuestion();
+
+					const response = await app.inject({
+						method: "GET",
+						url: `/v1/quizzes/${quiz.id}/questions/${question.id}`,
+					});
+					expect(response.statusCode).toBe(200);
+					expect(response.json()).toEqual(question);
 				});
 			});
 		});

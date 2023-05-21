@@ -1,6 +1,7 @@
 import {
 	Body,
 	Controller,
+	Get,
 	NotFoundException,
 	Param,
 	ParseUUIDPipe,
@@ -12,6 +13,7 @@ import payloadifyCreateQuizQuestionRequestBody from "./payloadifyCreateQuizQuest
 import CreateQuizQuestionRequestBody from "./CreateQuizQuestionRequestBody.js";
 import QuizQuestionsServiceQuizWithGivenIdNotFoundError from "../quiz_questions_service/QuizQuestionsServiceQuizWithGivenIdNotFoundError.js";
 import type QuizQuestion from "./QuizQuestion.js";
+import QuizQuestionsServiceQuizQuestionWithGivenIdNotFoundError from "../quiz_questions_service/QuizQuestionsServiceQuizQuestionWithGivenIdNotFoundError.js";
 
 @Controller("/")
 export default class QuizQuestionsController {
@@ -46,6 +48,40 @@ export default class QuizQuestionsController {
 		} catch (error) {
 			if (error instanceof QuizQuestionsServiceQuizWithGivenIdNotFoundError) {
 				throw new NotFoundException(`Quiz with id "${error.quizId}" not found`);
+			}
+			throw error;
+		}
+	}
+
+	@Get("/quizzes/:quizId/questions/:quizQuestionId")
+	public async getQuizQuestionById(
+		@Param(
+			"quizId",
+			new ParseUUIDPipe({
+				version: "4",
+			})
+		)
+		quizId: string,
+		@Param(
+			"quizQuestionId",
+			new ParseUUIDPipe({
+				version: "4",
+			})
+		)
+		quizQuestionId: string
+	): Promise<QuizQuestion> {
+		try {
+			const targetQuizQuestion = await this.quizQuestionsService.getQuizQuestionOfQuizById(
+				quizId,
+				quizQuestionId
+			);
+			return targetQuizQuestion;
+		} catch (error) {
+			if (error instanceof QuizQuestionsServiceQuizWithGivenIdNotFoundError) {
+				throw new NotFoundException(`Quiz with id "${error.quizId}" not found`);
+			}
+			if (error instanceof QuizQuestionsServiceQuizQuestionWithGivenIdNotFoundError) {
+				throw new NotFoundException(`Quiz question with id "${error.quizQuestionId}" not found`);
 			}
 			throw error;
 		}
