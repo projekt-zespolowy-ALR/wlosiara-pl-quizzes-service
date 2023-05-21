@@ -1,4 +1,5 @@
-import {Entity, Column, PrimaryGeneratedColumn} from "typeorm";
+import {Entity, Column, PrimaryGeneratedColumn, OneToMany} from "typeorm";
+import QuizQuestionEntity from "../../quiz_questions/quiz_questions_service/QuizQuestionEntity.js";
 
 @Entity({name: "quizzes"})
 export default class QuizEntity {
@@ -9,4 +10,7 @@ export default class QuizEntity {
 
 	@Column({name: "slug", type: "text"})
 	public readonly slug!: string;
+
+	@OneToMany(() => QuizQuestionEntity, (quizQuestion) => quizQuestion.quiz)
+	public readonly quizQuestions!: QuizQuestionEntity[];
 }
