@@ -1,6 +1,58 @@
 import {Injectable} from "@nestjs/common";
+import type CreateQuestionAnswerPayload from "./CreateQuestionAnswerPayload.js";
+import type QuestionAnswer from "../question_answers_controller/QuestionAnswer.js";
+import {EntityNotFoundError, QueryFailedError, Repository} from "typeorm";
+import QuizEntity from "../../quizzes/quizzes_service/QuizEntity.js";
+import QuestionAnswerEntity from "./QuestionAnswerEntity.js";
+import {InjectRepository} from "@nestjs/typeorm";
 
+import QuestionAnswersServiceQuestionWithGivenIdNotFoundError from "./QuestionAnswersServiceQuestionWithGivenIdNotFoundError.js";
+import QuestionAnswersServiceQuizWithGivenIdNotFoundError from "./QuestionAnswersServiceQuizWithGivenIdNotFoundError.js";
+import deentityifyQuestionAnswerEntity from "./deentityifyQuestionAnswerEntity.js";
 @Injectable()
 export default class QuestionAnswersService {
-	public constructor() {}
+	private readonly quizzesRepository: Repository<QuizEntity>;
+
+	private readonly questionAnswersRepository: Repository<QuestionAnswerEntity>;
+
+	public constructor(
+		@InjectRepository(QuizEntity) quizzesRepository: Repository<QuizEntity>,
+		@InjectRepository(QuestionAnswerEntity)
+		questionAnswersRepository: Repository<QuestionAnswerEntity>
+	) {
+		this.quizzesRepository = quizzesRepository;
+		this.questionAnswersRepository = questionAnswersRepository;
+	}
+	public async createQuestionAnswer(
+		quizId: string,
+		questionId: string,
+		createQuestionAnswerPayload: CreateQuestionAnswerPayload
+	): Promise<QuestionAnswer> {
+		try {
+			return deentityifyQuestionAnswerEntity(
+				await this.questionAnswersRepository.save({
+					...createQuestionAnswerPayload,
+					questionId,
+				})
+			);
+		} catch (error) {
+			if (
+				error instanceof QueryFailedError &&
+				error.message.includes("violates foreign key constraint")
+			) {
+				await this.quizzesRepository
+					.findOneOrFail({where: {id: quizId}})
+					.then(() => {
+						throw new QuestionAnswersServiceQuestionWithGivenIdNotFoundError(questionId);
+					})
+					.catch((error) => {
+						if (error instanceof EntityNotFoundError) {
+							throw new QuestionAnswersServiceQuizWithGivenIdNotFoundError(quizId);
+						}
+						throw error;
+					});
+			}
+			throw error;
+		}
+	}
 }
