@@ -91,6 +91,23 @@ describe("QuestionAnswersModule", () => {
 					});
 				});
 			});
+			describe("GET /quizzes/[quizId]/questions/[questionId]/answers", () => {
+				test("Should return 404", async () => {
+					const quizId = "e05fc2f9-12a1-4f58-a3b9-ca9105b3b699";
+					const questionId = "02bdb86a-3a0d-46c6-be24-858079461eaa";
+
+					const response = await app.inject({
+						method: "GET",
+						url: `/v1/quizzes/${quizId}/questions/${questionId}/answers`,
+					});
+					expect(response.statusCode).toBe(404);
+					expect(response.json()).toEqual({
+						error: "Not Found",
+						message: `Quiz with id "${quizId}" not found`,
+						statusCode: 404,
+					});
+				});
+			});
 		});
 		describe("One quiz with no questions in database", () => {
 			const addTestQuiz = async () => {
@@ -122,6 +139,23 @@ describe("QuestionAnswersModule", () => {
 						method: "POST",
 						url: `/v1/quizzes/${quiz.id}/questions/${questionId}/answers`,
 						payload: createQuestionAnswerRequestBody,
+					});
+					expect(response.statusCode).toBe(404);
+					expect(response.json()).toEqual({
+						error: "Not Found",
+						message: `Question with id "${questionId}" not found`,
+						statusCode: 404,
+					});
+				});
+			});
+			describe("GET /quizzes/[quizId]/questions/[questionId]/answers", () => {
+				test("Should return 404", async () => {
+					const quiz = await addTestQuiz();
+					const questionId = "02bdb86a-3a0d-46c6-be24-858079461eaa";
+
+					const response = await app.inject({
+						method: "GET",
+						url: `/v1/quizzes/${quiz.id}/questions/${questionId}/answers`,
 					});
 					expect(response.statusCode).toBe(404);
 					expect(response.json()).toEqual({
@@ -185,6 +219,158 @@ describe("QuestionAnswersModule", () => {
 						...createQuestionAnswerRequestBody,
 						id: expect.any(String),
 					});
+				});
+			});
+
+			describe("GET /quizzes/[quizId]/questions/[questionId]/answers", () => {
+				test("Should return 200", async () => {
+					const {quiz, question} = await addTestQuizWithQuestion();
+
+					const response = await app.inject({
+						method: "GET",
+						url: `/v1/quizzes/${quiz.id}/questions/${question.id}/answers`,
+					});
+					expect(response.statusCode).toBe(200);
+					const responseJson = response.json();
+					expect(responseJson).toEqual([]);
+				});
+			});
+		});
+
+		describe("One quiz with one question with one answer in database", () => {
+			const addTestQuizWithQuestionAndAnswer = async () => {
+				const addQuizRequestBody = {
+					name: "Quiz 1",
+					slug: "quiz-1",
+				};
+				const result = await app.inject({
+					method: "POST",
+					url: "/v1/quizzes",
+					payload: addQuizRequestBody,
+				});
+				const resultJson = result.json();
+				if (result.statusCode !== 201) {
+					throw new Error(`Failed to add test quiz: ${resultJson}`);
+				}
+				const addQuestionRequestBody = {
+					content: "What is the capital of France?",
+				};
+				const questionResult = await app.inject({
+					method: "POST",
+					url: `/v1/quizzes/${resultJson.id}/questions`,
+					payload: addQuestionRequestBody,
+				});
+				const questionResultJson = questionResult.json();
+				if (questionResult.statusCode !== 201) {
+					throw new Error(`Failed to add test question: ${questionResultJson}`);
+				}
+				const addAnswerRequestBody = {
+					content: "Paris",
+					kind: "FRANCE_LOVER",
+				};
+				const answerResult = await app.inject({
+					method: "POST",
+					url: `/v1/quizzes/${resultJson.id}/questions/${questionResultJson.id}/answers`,
+					payload: addAnswerRequestBody,
+				});
+				const answerResultJson = answerResult.json();
+				if (answerResult.statusCode !== 201) {
+					throw new Error(`Failed to add test answer: ${answerResultJson}`);
+				}
+				return {
+					quiz: resultJson,
+					question: questionResultJson,
+					answer: answerResultJson,
+				};
+			};
+
+			describe("GET /quizzes/[quizId]/questions/[questionId]/answers", () => {
+				test("Should return 200", async () => {
+					const {quiz, question, answer} = await addTestQuizWithQuestionAndAnswer();
+
+					const response = await app.inject({
+						method: "GET",
+						url: `/v1/quizzes/${quiz.id}/questions/${question.id}/answers`,
+					});
+					expect(response.statusCode).toBe(200);
+					const responseJson = response.json();
+					expect(responseJson).toEqual([answer]);
+				});
+			});
+		});
+
+		describe("One quiz with one question with three answers in database", () => {
+			const addTestQuizWithQuestionAndAnswers = async () => {
+				const addQuizRequestBody = {
+					name: "Quiz 1",
+					slug: "quiz-1",
+				};
+				const result = await app.inject({
+					method: "POST",
+					url: "/v1/quizzes",
+					payload: addQuizRequestBody,
+				});
+				const resultJson = result.json();
+				if (result.statusCode !== 201) {
+					throw new Error(`Failed to add test quiz: ${resultJson}`);
+				}
+				const addQuestionRequestBody = {
+					content: "What is the capital of France?",
+				};
+				const questionResult = await app.inject({
+					method: "POST",
+					url: `/v1/quizzes/${resultJson.id}/questions`,
+					payload: addQuestionRequestBody,
+				});
+				const questionResultJson = questionResult.json();
+				if (questionResult.statusCode !== 201) {
+					throw new Error(`Failed to add test question: ${questionResultJson}`);
+				}
+				const addAnswerRequestBody = {
+					content: "Paris",
+					kind: "FRANCE_LOVER",
+				};
+
+				const answerResultJsons = await Promise.all(
+					Array(3)
+						.fill(null)
+						.map(() =>
+							app
+								.inject({
+									method: "POST",
+									url: `/v1/quizzes/${resultJson.id}/questions/${questionResultJson.id}/answers`,
+									payload: addAnswerRequestBody,
+								})
+								.then((response) => {
+									const responseJson = response.json();
+									if (response.statusCode !== 201) {
+										throw new Error(`Failed to add test answer: ${responseJson}`);
+									}
+									return responseJson;
+								})
+						)
+				);
+
+				return {
+					quiz: resultJson,
+					question: questionResultJson,
+					answers: answerResultJsons,
+				};
+			};
+
+			describe("GET /quizzes/[quizId]/questions/[questionId]/answers", () => {
+				test("Should return 200", async () => {
+					const {quiz, question, answers} = await addTestQuizWithQuestionAndAnswers();
+
+					const response = await app.inject({
+						method: "GET",
+						url: `/v1/quizzes/${quiz.id}/questions/${question.id}/answers`,
+					});
+					expect(response.statusCode).toBe(200);
+					const responseJson = response.json();
+
+					expect(responseJson).toEqual(expect.arrayContaining(answers));
+					expect(responseJson).toHaveLength(answers.length);
 				});
 			});
 		});

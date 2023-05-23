@@ -55,4 +55,24 @@ export default class QuestionAnswersService {
 			throw error;
 		}
 	}
+	public async getQuestionAnswers(quizId: string, questionId: string): Promise<QuestionAnswer[]> {
+		const result = (
+			await this.quizzesRepository
+				.createQueryBuilder("quiz")
+				.leftJoinAndSelect("quiz.quizQuestions", "quizQuestion", "quizQuestion.id = :questionId", {
+					questionId,
+				})
+				.leftJoinAndSelect("quizQuestion.questionAnswers", "questionAnswer")
+				.where("quiz.id = :quizId", {quizId})
+				.getMany()
+		)[0];
+		if (result === undefined) {
+			throw new QuestionAnswersServiceQuizWithGivenIdNotFoundError(quizId);
+		}
+		const quizQuestion = result.quizQuestions[0];
+		if (quizQuestion === undefined) {
+			throw new QuestionAnswersServiceQuestionWithGivenIdNotFoundError(questionId);
+		}
+		return quizQuestion.questionAnswers.map(deentityifyQuestionAnswerEntity);
+	}
 }

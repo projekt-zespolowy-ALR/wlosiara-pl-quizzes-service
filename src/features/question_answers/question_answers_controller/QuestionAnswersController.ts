@@ -1,4 +1,12 @@
-import {Body, Controller, NotFoundException, Param, Post, ValidationPipe} from "@nestjs/common";
+import {
+	Body,
+	Controller,
+	Get,
+	NotFoundException,
+	Param,
+	Post,
+	ValidationPipe,
+} from "@nestjs/common";
 import type QuestionAnswer from "./QuestionAnswer.js";
 import CreateQuestionAnswerRequestBody from "./CreateQuestionAnswerRequestBody.js";
 import QuestionAnswersService from "../question_answers_service/QuestionAnswersService.js";
@@ -34,6 +42,28 @@ export default class QuestionAnswersController {
 				payloadifyCreateQuestionAnswerRequestBody(createQuestionAnswerRequestBody)
 			);
 			return createdQuestionAnswer;
+		} catch (error) {
+			if (error instanceof QuestionAnswersServiceQuizWithGivenIdNotFoundError) {
+				throw new NotFoundException(`Quiz with id "${error.quizId}" not found`);
+			}
+			if (error instanceof QuestionAnswersServiceQuestionWithGivenIdNotFoundError) {
+				throw new NotFoundException(`Question with id "${error.questionId}" not found`);
+			}
+			throw error;
+		}
+	}
+
+	@Get("/")
+	public async getQuestionAnswers(
+		@Param("quizId") quizId: string,
+		@Param("questionId") questionId: string
+	): Promise<QuestionAnswer[]> {
+		try {
+			const questionAnswers = await this.questionAnswersService.getQuestionAnswers(
+				quizId,
+				questionId
+			);
+			return questionAnswers;
 		} catch (error) {
 			if (error instanceof QuestionAnswersServiceQuizWithGivenIdNotFoundError) {
 				throw new NotFoundException(`Quiz with id "${error.quizId}" not found`);
