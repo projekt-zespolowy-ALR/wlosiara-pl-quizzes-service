@@ -1,6 +1,6 @@
 {
 	"name": "wlosiara-pl-quizzes-service",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "wlosiara.pl - Products service",
 	"private": true,
 	"main": "./dist/src/main.js",
