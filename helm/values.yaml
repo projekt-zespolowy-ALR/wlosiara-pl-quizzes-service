@@ -7,7 +7,7 @@ postgresql:
     password: null # required
   primary:
     initdb:
-      scripts-configmap: "wlosiara-pl-quizzes-service-initdb-scripts"
+      scripts-configmap: "wlosiara-pl-quizzes-service-postgresql-initdb-scripts"
     resources:
       requests:
         cpu: "50m"
