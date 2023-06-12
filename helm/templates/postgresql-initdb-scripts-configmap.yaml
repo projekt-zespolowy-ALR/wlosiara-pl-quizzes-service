@@ -5,4 +5,5 @@ metadata:
   labels:
     app: "{{ .Release.Name }}"
 data:
-  create_tables: {{.Files.Get "./postgresql/create_tables.sql"}}
+  create_tables: |-
+{{.Files.Get "postgresql/create_tables.sql" | indent 4}}
