@@ -85,7 +85,7 @@ export default class QuizzesController {
 		quizId: string
 	): Promise<boolean> {
 		try {
-			const targetQuiz = await this.quizzesService.getQuizById(quizId);
+			const targetQuiz = await this.quizzesService.deleteQuizById(quizId);
 			return targetQuiz;
 		} catch (error) {
 			if (error instanceof QuizzesServiceQuizWithGivenIdNotFoundError) {
