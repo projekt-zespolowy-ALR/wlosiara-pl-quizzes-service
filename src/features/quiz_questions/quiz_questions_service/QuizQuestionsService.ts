@@ -99,4 +99,25 @@ export default class QuizQuestionsService {
 			take: pagingOptions.take,
 		});
 	}
+
+	public async deleteQuizQuestionOfQuizById(
+		quizId: string,
+		quizQuestionId: string
+	): Promise<boolean> {
+		const result = await this.quizzesRepository
+			.createQueryBuilder("quiz")
+			.leftJoinAndSelect(
+				"quiz.quizQuestions",
+				"quizQuestion",
+				"quizQuestion.id = :quizQuestionId",
+				{quizQuestionId}
+			)
+			.where("quiz.id = :quizId", {quizId})
+			.delete();
+		if (result === null) {
+			throw new QuizQuestionsServiceQuizWithGivenIdNotFoundError(quizId);
+		}
+		
+		return true;
+	}
 }

@@ -2,6 +2,7 @@ import {
 	Body,
 	Controller,
 	Get,
+	Delete,
 	NotFoundException,
 	Param,
 	ParseUUIDPipe,
@@ -116,6 +117,40 @@ export default class QuizQuestionsController {
 		} catch (error) {
 			if (error instanceof QuizQuestionsServiceQuizWithGivenIdNotFoundError) {
 				throw new NotFoundException(`Quiz with id "${error.quizId}" not found`);
+			}
+			throw error;
+		}
+	}
+
+	@Delete("/quizzes/:quizId/questions/:quizQuestionId")
+	public async deleteQuizQuestionById(
+		@Param(
+			"quizId",
+			new ParseUUIDPipe({
+				version: "4",
+			})
+		)
+		quizId: string,
+		@Param(
+			"quizQuestionId",
+			new ParseUUIDPipe({
+				version: "4",
+			})
+		)
+		quizQuestionId: string
+	): Promise<boolean> {
+		try {
+			const targetQuizQuestion = await this.quizQuestionsService.deleteQuizQuestionOfQuizById(
+				quizId,
+				quizQuestionId
+			);
+			return targetQuizQuestion;
+		} catch (error) {
+			if (error instanceof QuizQuestionsServiceQuizWithGivenIdNotFoundError) {
+				throw new NotFoundException(`Quiz with id "${error.quizId}" not found`);
+			}
+			if (error instanceof QuizQuestionsServiceQuizQuestionWithGivenIdNotFoundError) {
+				throw new NotFoundException(`Quiz question with id "${error.quizQuestionId}" not found`);
 			}
 			throw error;
 		}
