@@ -117,7 +117,7 @@ export default class QuizQuestionsService {
 		if (result === null) {
 			throw new QuizQuestionsServiceQuizWithGivenIdNotFoundError(quizId);
 		}
-		
+
 		return true;
 	}
 }
