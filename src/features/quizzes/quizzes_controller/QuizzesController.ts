@@ -2,6 +2,7 @@ import {
 	Body,
 	Controller,
 	Get,
+	Delete,
 	NotFoundException,
 	Param,
 	ParseUUIDPipe,
@@ -71,5 +72,26 @@ export default class QuizzesController {
 		return await this.quizzesService.createQuiz(
 			payloadifyCreateQuizRequestBody(createQuizRequestBody)
 		);
+	}
+
+	@Delete("/quizzes/:quizId")
+	public async deleteQuizById(
+		@Param(
+			"quizId",
+			new ParseUUIDPipe({
+				version: "4",
+			})
+		)
+		quizId: string
+	): Promise<boolean> {
+		try {
+			const targetQuiz = await this.quizzesService.deleteQuizById(quizId);
+			return targetQuiz;
+		} catch (error) {
+			if (error instanceof QuizzesServiceQuizWithGivenIdNotFoundError) {
+				throw new NotFoundException(`Quiz with id "${quizId}" not found`);
+			}
+			throw error;
+		}
 	}
 }

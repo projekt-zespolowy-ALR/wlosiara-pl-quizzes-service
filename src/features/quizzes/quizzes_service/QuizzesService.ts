@@ -33,4 +33,16 @@ export default class QuizzesService {
 	public async createQuiz(createQuizPayload: CreateQuizPayload): Promise<Quiz> {
 		return deentityifyQuizEntity(await this.quizzesRepository.save(createQuizPayload));
 	}
+
+	public async deleteQuizById(id: string): Promise<boolean> {
+		try {
+			await this.quizzesRepository.delete({id});
+			return true;
+		} catch (error) {
+			if (error instanceof EntityNotFoundError) {
+				throw new QuizzesServiceQuizWithGivenIdNotFoundError(id);
+			}
+			throw error;
+		}
+	}
 }
